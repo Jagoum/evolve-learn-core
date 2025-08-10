@@ -232,17 +232,17 @@ export default function Quiz() {
     return (
       <MainLayout userRole={userRole}>
         <div className="max-w-4xl mx-auto p-6 space-y-6">
-          <Card>
-            <CardHeader className="text-center">
+        <Card>
+          <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
                 <Award className="h-16 w-16 text-yellow-500" />
               </div>
-              <CardTitle className="text-2xl">Quiz Results</CardTitle>
+            <CardTitle className="text-2xl">Quiz Results</CardTitle>
               <CardDescription>
                 {mockQuizData.title} - {results.score}% Complete
               </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          </CardHeader>
+          <CardContent className="space-y-6">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{results.score}%</div>
@@ -256,21 +256,21 @@ export default function Quiz() {
                   <div className="text-2xl font-bold text-purple-600">{results.totalQuestions}</div>
                   <div className="text-sm text-purple-600">Total Questions</div>
                 </div>
-              </div>
-              
-              <div className="space-y-4">
+            </div>
+            
+            <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Question Review</h3>
                 {mockAIQuestions.map((question, index) => {
                   const userAnswer = answers[question.id]
                   const isCorrect = question.type === 'multiple_choice' 
                     ? question.options.find(opt => opt.correct)?.id === userAnswer
                     : userAnswer && userAnswer.trim().length > 0
-                  
-                  return (
+                
+                return (
                     <div key={question.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Question {index + 1}</span>
-                        {isCorrect ? (
+                      {isCorrect ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
                         ) : (
                           <XCircle className="h-5 w-5 text-red-600" />
@@ -304,9 +304,9 @@ export default function Quiz() {
                           <div className="text-sm font-medium">Your Answer:</div>
                           <div className="text-sm text-gray-600">
                             {userAnswer || 'Not answered'}
-                          </div>
+                            </div>
                         </div>
-                      )}
+                        )}
                       
                       <div className="p-3 bg-blue-50 rounded-lg">
                         <div className="text-sm font-medium text-blue-800 mb-1">Explanation:</div>
@@ -321,21 +321,21 @@ export default function Quiz() {
                       )}
                     </div>
                   )
-                })}
-              </div>
-              
+              })}
+            </div>
+            
               <div className="flex justify-center gap-4">
                 <Button onClick={() => navigate('/student/quizzes')}>
                   Back to Quizzes
-                </Button>
-                <Button variant="outline" onClick={() => window.location.reload()}>
+              </Button>
+              <Button variant="outline" onClick={() => window.location.reload()}>
                   <RotateCcw className="mr-2 h-4 w-4" />
-                  Retake Quiz
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                Retake Quiz
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       </MainLayout>
     )
   }
@@ -409,14 +409,14 @@ export default function Quiz() {
           </CardContent>
         </Card>
 
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+      {/* Progress Bar */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
             <span>Progress</span>
             <span>{currentQuestionIndex + 1} of {mockQuizData.totalQuestions}</span>
-          </div>
-          <Progress value={progress} className="h-2" />
         </div>
+        <Progress value={progress} className="h-2" />
+      </div>
 
         {/* Timer Controls */}
         <div className="flex justify-center gap-4">
@@ -442,8 +442,8 @@ export default function Quiz() {
 
         {/* Current Question */}
         {currentQuestion && (
-          <Card>
-            <CardHeader>
+      <Card>
+        <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold">Question {currentQuestionIndex + 1}</span>
@@ -459,7 +459,7 @@ export default function Quiz() {
                   {currentQuestion.subject} • {currentQuestion.topic}
                 </div>
               </div>
-            </CardHeader>
+        </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-lg text-gray-800">
                 {currentQuestion.question}
@@ -478,8 +478,8 @@ export default function Quiz() {
                           {option.text}
                         </Label>
                       </div>
-                    ))}
-                  </div>
+            ))}
+          </div>
                 </RadioGroup>
               )}
 
@@ -531,14 +531,14 @@ export default function Quiz() {
 
         {/* Navigation */}
         <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={previousQuestion}
+            <Button
+              variant="outline"
+              onClick={previousQuestion}
             disabled={currentQuestionIndex === 0}
-          >
-            Previous
-          </Button>
-          
+            >
+              Previous
+            </Button>
+            
           <div className="flex gap-2">
             {currentQuestionIndex < mockAIQuestions.length - 1 ? (
               <Button onClick={nextQuestion}>
@@ -551,7 +551,7 @@ export default function Quiz() {
             )}
           </div>
         </div>
-      </div>
+    </div>
     </MainLayout>
   )
 }

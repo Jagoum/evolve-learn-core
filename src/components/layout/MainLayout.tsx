@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { 
   BookOpen, 
   Users, 
@@ -181,6 +182,8 @@ export default function MainLayout({ children, userRole: propUserRole }: MainLay
                 <Video className="h-5 w-5 text-gray-400" />
                 <span className="text-sm text-gray-500">Video Mode</span>
               </div>
+              <div className="h-6 w-px bg-gray-300" />
+              <ThemeToggle />
             </div>
           </div>
         </div>

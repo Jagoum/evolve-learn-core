@@ -1,121 +1,125 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  GraduationCap, 
-  Users, 
-  Clock, 
-  BookOpen, 
-  Tag,
-  Calendar,
-  Target,
-  Play
-} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { fastapiClient } from "@/integrations/fastapi/client";
 import { useSEO } from "@/hooks/useSEO";
-import { mockClasses } from "@/lib/mockData";
+import { toast } from "@/components/ui/use-toast";
+
+interface ClassInfo {
+  id: string;
+  title: string;
+  description: string;
+  instructor: string;
+  duration: string;
+  difficulty: string;
+  content: Array<{
+    id: string;
+    title: string;
+    text: string;
+    order: number;
+    type: string;
+  }>;
+}
 
 const Classes = () => {
-  useSEO({ 
-    title: "Classes - EvolveLearn", 
-    description: "Browse and enroll in available classes.",
-    canonical: window.location.href 
-  });
+  useSEO({ title: "Classes - AI Learning", description: "Browse and enroll in AI-powered learning classes.", canonical: window.location.href });
+
+  const { user } = useAuth();
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await fastapiClient.getClasses();
+        if (response.data) {
+          setClasses(response.data);
+        } else if (response.error) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch classes: " + response.error,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch classes",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClasses();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <div className="text-center">Loading classes...</div>
+      </main>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Available Classes</h1>
-          <p className="text-muted-foreground mt-2">
-            Discover and enroll in courses that match your interests and skill level
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/student">Back to Dashboard</Link>
-        </Button>
+        <h1 className="text-3xl font-bold">Available Classes</h1>
+        {user && (
+          <Button asChild>
+            <Link to="/classes/create">Create Class</Link>
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {mockClasses.map((classItem) => (
+        {classes.map((classItem) => (
           <Card key={classItem.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-2">
-                  <GraduationCap className="h-5 w-5 text-blue-600" />
-                  <Badge variant="secondary">{classItem.subject}</Badge>
-                </div>
-                <Badge variant={classItem.level === 'beginner' ? 'default' : classItem.level === 'intermediate' ? 'secondary' : 'destructive'}>
-                  {classItem.level}
-                </Badge>
-              </div>
-              <CardTitle className="text-lg">{classItem.title}</CardTitle>
-              <CardDescription className="line-clamp-2">
-                {classItem.description}
-              </CardDescription>
+              <CardTitle className="text-xl">{classItem.title}</CardTitle>
+              <CardDescription>{classItem.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4" />
-                  <span>{classItem.teacher.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="h-4 w-4" />
-                  <span>{classItem.currentStudents}/{classItem.maxStudents} students enrolled</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span>{classItem.duration} min</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>{classItem.schedule}</span>
-                </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Instructor:</span>
+                <span>{classItem.instructor}</span>
               </div>
-              
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span>Progress</span>
-                  <span>{classItem.progress}%</span>
-                </div>
-                <Progress value={classItem.progress} className="h-2" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Duration:</span>
+                <span>{classItem.duration}</span>
               </div>
-
-              {/* Tags */}
-              <div className="flex flex-wrap gap-1">
-                {classItem.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    <Tag className="h-3 w-3 mr-1" />
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-
               <div className="flex items-center justify-between">
-                <Button asChild size="sm" className="flex-1 mr-2">
-                  <Link to={`/classes/${classItem.id}`}>View Details</Link>
-                </Button>
-                <Button size="sm" variant="outline">
-                  <Play className="h-4 w-4" />
-                </Button>
+                <span className="text-muted-foreground text-sm">Difficulty:</span>
+                <Badge variant={classItem.difficulty === 'Beginner' ? 'default' : 'secondary'}>
+                  {classItem.difficulty}
+                </Badge>
               </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Content:</span>
+                <span>{classItem.content.length} sections</span>
+              </div>
+              <Button asChild className="w-full">
+                <Link to={`/classes/${classItem.id}`}>View Class</Link>
+              </Button>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="text-center py-8">
-        <p className="text-muted-foreground mb-4">
-          More classes coming soon! Check back regularly for new offerings.
-        </p>
-        <Button variant="outline" asChild>
-          <Link to="/student">Return to Dashboard</Link>
-        </Button>
-      </div>
-    </div>
+      {classes.length === 0 && (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-semibold mb-2">No classes available</h3>
+          <p className="text-muted-foreground mb-4">
+            Check back later for new learning opportunities.
+          </p>
+        </div>
+      )}
+    </main>
   );
 };
 

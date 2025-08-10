@@ -1,148 +1,252 @@
-const FASTAPI_BASE_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000'
+import { toast } from "@/components/ui/use-toast";
 
-export class FastAPIClient {
-  private baseUrl: string
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-  constructor() {
-    this.baseUrl = FASTAPI_BASE_URL
+interface ApiResponse<T = any> {
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+class FastAPIClient {
+  private baseURL: string;
+  private token: string | null = null;
+
+  constructor(baseURL: string = API_BASE_URL) {
+    this.baseURL = baseURL;
+    this.token = localStorage.getItem('auth_token');
   }
 
-  // Generic request method
+  setToken(token: string) {
+    this.token = token;
+    localStorage.setItem('auth_token', token);
+  }
+
+  clearToken() {
+    this.token = null;
+    localStorage.removeItem('auth_token');
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`
+  ): Promise<ApiResponse<T>> {
+    const url = `${this.baseURL}${endpoint}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    })
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
 
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.statusText}`)
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
     }
 
-    return response.json()
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+      toast({
+        title: "API Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      return { error: errorMessage };
+    }
   }
 
-  // AI-powered question generation
-  async generateQuestions(
-    topic: string,
-    difficulty: string,
-    questionType: string,
-    count: number = 5
-  ): Promise<any[]> {
-    return this.request('/ai/generate-questions', {
+  // Authentication endpoints
+  async login(email: string, password: string) {
+    return this.request('/api/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async register(email: string, password: string, name: string, role: string = 'student') {
+    return this.request('/api/v1/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password, name, role }),
+    });
+  }
+
+  async getCurrentUser() {
+    return this.request('/api/v1/auth/me');
+  }
+
+  async logout() {
+    const result = await this.request('/api/v1/auth/logout', {
+      method: 'POST',
+    });
+    if (result.data) {
+      this.clearToken();
+    }
+    return result;
+  }
+
+  // Classes endpoints
+  async getClasses() {
+    return this.request('/api/v1/classes');
+  }
+
+  async getClass(classId: string) {
+    return this.request(`/api/v1/classes/${classId}`);
+  }
+
+  async createClass(classData: {
+    title: string;
+    description: string;
+    instructor: string;
+    duration: string;
+    difficulty: string;
+  }) {
+    return this.request('/api/v1/classes', {
+      method: 'POST',
+      body: JSON.stringify(classData),
+    });
+  }
+
+  async updateClass(classId: string, classData: {
+    title: string;
+    description: string;
+    instructor: string;
+    duration: string;
+    difficulty: string;
+  }) {
+    return this.request(`/api/v1/classes/${classId}`, {
+      method: 'PUT',
+      body: JSON.stringify(classData),
+    });
+  }
+
+  async deleteClass(classId: string) {
+    return this.request(`/api/v1/classes/${classId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Quiz endpoints
+  async getQuizzes() {
+    return this.request('/api/v1/quiz');
+  }
+
+  async getQuiz(quizId: string) {
+    return this.request(`/api/v1/quiz/${quizId}`);
+  }
+
+  async submitQuiz(quizId: string, answers: Array<{ question_id: string; answer: string }>) {
+    return this.request(`/api/v1/quiz/${quizId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify({ quiz_id: quizId, answers }),
+    });
+  }
+
+  async getQuizResults(quizId: string) {
+    return this.request(`/api/v1/quiz/${quizId}/results`);
+  }
+
+  // Study Room endpoints
+  async getStudyRooms() {
+    return this.request('/api/v1/study-room');
+  }
+
+  async createStudyRoom(roomData: {
+    name: string;
+    description?: string;
+    max_users?: number;
+    is_private?: boolean;
+  }) {
+    return this.request('/api/v1/study-room', {
+      method: 'POST',
+      body: JSON.stringify(roomData),
+    });
+  }
+
+  async joinStudyRoom(roomId: string) {
+    return this.request('/api/v1/study-room/join', {
+      method: 'POST',
+      body: JSON.stringify({ room_id: roomId }),
+    });
+  }
+
+  async leaveStudyRoom(roomId: string) {
+    return this.request('/api/v1/study-room/leave', {
+      method: 'POST',
+      body: JSON.stringify({ room_id: roomId }),
+    });
+  }
+
+  // AI endpoints
+  async generateContent(request: {
+    prompt: string;
+    content_type: string;
+    difficulty?: string;
+    max_length?: number;
+  }) {
+    return this.request('/api/v1/ai/generate', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async moderateContent(content: string, contentType: string = 'text') {
+    return this.request('/api/v1/ai/moderate', {
+      method: 'POST',
+      body: JSON.stringify({ content, content_type: contentType }),
+    });
+  }
+
+  async generateLearningPath(request: {
+    user_id: string;
+    subject: string;
+    current_level: string;
+    goals: string[];
+  }) {
+    return this.request('/api/v1/ai/learning-path', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async explainConcept(concept: string, difficulty: string = 'intermediate', maxLength: number = 500) {
+    return this.request('/api/v1/ai/explain', {
       method: 'POST',
       body: JSON.stringify({
-        topic,
+        prompt: concept,
+        content_type: 'explanation',
         difficulty,
-        question_type: questionType,
-        count,
+        max_length: maxLength,
       }),
-    })
+    });
   }
 
-  // Student progress analysis
-  async analyzeStudentProgress(studentId: string, classId: string): Promise<any> {
-    return this.request(`/ai/analyze-progress/${studentId}/${classId}`)
-  }
-
-  // Generate AI report
-  async generateAIReport(
-    studentId: string,
-    classId: string,
-    reportType: string
-  ): Promise<any> {
-    return this.request('/ai/generate-report', {
+  async generateQuiz(topic: string, difficulty: string = 'intermediate') {
+    return this.request('/api/v1/ai/quiz-generation', {
       method: 'POST',
       body: JSON.stringify({
-        student_id: studentId,
-        class_id: classId,
-        report_type: reportType,
+        prompt: topic,
+        content_type: 'quiz',
+        difficulty,
       }),
-    })
+    });
   }
 
-  // Content recommendation
-  async getContentRecommendations(
-    studentId: string,
-    subject: string,
-    learningStyle: string
-  ): Promise<any[]> {
-    return this.request(`/ai/recommend-content/${studentId}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        subject,
-        learning_style: learningStyle,
-      }),
-    })
-  }
-
-  // Study path optimization
-  async optimizeStudyPath(
-    studentId: string,
-    currentProgress: any
-  ): Promise<any> {
-    return this.request('/ai/optimize-study-path', {
-      method: 'POST',
-      body: JSON.stringify({
-        student_id: studentId,
-        current_progress: currentProgress,
-      }),
-    })
-  }
-
-  // Message moderation
-  async moderateMessage(message: string): Promise<{
-    is_appropriate: boolean
-    confidence: number
-    reason?: string
-  }> {
-    return this.request('/ai/moderate-message', {
-      method: 'POST',
-      body: JSON.stringify({ message }),
-    })
-  }
-
-  // Quiz difficulty adjustment
-  async adjustQuizDifficulty(
-    studentId: string,
-    quizId: string,
-    performance: number
-  ): Promise<any> {
-    return this.request('/ai/adjust-quiz-difficulty', {
-      method: 'POST',
-      body: JSON.stringify({
-        student_id: studentId,
-        quiz_id: quizId,
-        performance,
-      }),
-    })
-  }
-
-  // Learning style detection
-  async detectLearningStyle(
-    studentId: string,
-    interactionData: any[]
-  ): Promise<{
-    learning_style: string
-    confidence: number
-    recommendations: string[]
-  }> {
-    return this.request('/ai/detect-learning-style', {
-      method: 'POST',
-      body: JSON.stringify({
-        student_id: studentId,
-        interaction_data: interactionData,
-      }),
-    })
+  // Health check
+  async healthCheck() {
+    return this.request('/health');
   }
 }
 
-// Create a singleton instance
-export const fastAPIClient = new FastAPIClient() 
+export const fastapiClient = new FastAPIClient();
+export default fastapiClient; 

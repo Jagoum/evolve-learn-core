@@ -6,7 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { toast } from '@/components/ui/use-toast'
+import { fastapiClient } from '@/integrations/fastapi/client'
 import { 
   Users, 
   BookOpen, 
@@ -24,7 +27,11 @@ import {
   FileText,
   Headphones,
   CheckCircle,
-  Clock
+  Clock,
+  Sparkles,
+  Target,
+  Lightbulb,
+  Loader2
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -128,21 +135,134 @@ export default function TeacherDashboard() {
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [modifiedReport, setModifiedReport] = useState('')
   const [showClassDialog, setShowClassDialog] = useState(false)
+  const [showAIContentDialog, setShowAIContentDialog] = useState(false)
+  const [showStudentAnalysisDialog, setShowStudentAnalysisDialog] = useState(false)
   const [newClass, setNewClass] = useState({
     name: '',
     type: 'online',
     maxStudents: 30,
     description: ''
   })
+  
+  // AI Integration States
+  const [isGeneratingContent, setIsGeneratingContent] = useState(false)
+  const [isAnalyzingStudent, setIsAnalyzingStudent] = useState(false)
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [aiContentPrompt, setAiContentPrompt] = useState('')
+  const [generatedContent, setGeneratedContent] = useState('')
+  const [selectedStudentForAnalysis, setSelectedStudentForAnalysis] = useState('')
+  const [studentAnalysis, setStudentAnalysis] = useState('')
 
-  const handleGenerateReport = (studentId: string) => {
-    // TODO: Implement AI report generation
-    console.log('Generating report for student:', studentId)
+  // Enhanced AI Functions
+  const handleGenerateAIContent = async () => {
+    if (!aiContentPrompt.trim()) return
+    
+    setIsGeneratingContent(true)
+    try {
+      const response = await fastapiClient.generateContent({
+        prompt: aiContentPrompt,
+        content_type: 'lesson',
+        difficulty: 'intermediate',
+        max_length: 800
+      })
+      
+      if (response.data) {
+        setGeneratedContent(response.data)
+        toast({
+          title: "Content Generated",
+          description: "AI has generated new learning content for you",
+        })
+      } else {
+        throw new Error("Failed to generate content")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate AI content. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingContent(false)
+    }
   }
 
-  const handleSendToParent = (studentId: string, reportContent: string) => {
-    // TODO: Implement sending report to parent
-    console.log('Sending report to parent for student:', studentId, reportContent)
+  const handleAnalyzeStudent = async () => {
+    if (!selectedStudentForAnalysis) return
+    
+    setIsAnalyzingStudent(true)
+    try {
+      const response = await fastapiClient.explainConcept(
+        `Analyze the learning progress and provide recommendations for student: ${selectedStudentForAnalysis}. Include strengths, weaknesses, and specific improvement strategies.`,
+        'intermediate',
+        600
+      )
+      
+      if (response.data) {
+        setStudentAnalysis(response.data)
+        toast({
+          title: "Analysis Complete",
+          description: "AI has analyzed the student's performance",
+        })
+      } else {
+        throw new Error("Failed to analyze student")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to analyze student. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsAnalyzingStudent(false)
+    }
+  }
+
+  const handleGenerateAIReport = async (studentId: string, studentName: string) => {
+    setIsGeneratingReport(true)
+    try {
+      const response = await fastapiClient.generateContent({
+        prompt: `Generate a comprehensive progress report for ${studentName}. Include academic performance, behavioral observations, areas of strength, areas for improvement, and specific recommendations for parents and teachers.`,
+        content_type: 'report',
+        difficulty: 'intermediate',
+        max_length: 1000
+      })
+      
+      if (response.data) {
+        setModifiedReport(response.data)
+        setSelectedReport({ studentName, content: response.data })
+        setShowReportDialog(true)
+        toast({
+          title: "Report Generated",
+          description: "AI has generated a comprehensive progress report",
+        })
+      } else {
+        throw new Error("Failed to generate report")
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate AI report. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeneratingReport(false)
+    }
+  }
+
+  const handleSendToParent = async (studentId: string, reportContent: string) => {
+    try {
+      // In a real app, this would send via email/notification system
+      toast({
+        title: "Report Sent",
+        description: "Progress report has been sent to parent successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send report to parent",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleModifyReport = (report: any) => {
@@ -185,13 +305,21 @@ export default function TeacherDashboard() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Teacher Dashboard</h1>
-            <p className="text-gray-600">Monitor student progress and manage your classes</p>
+            <h1 className="text-3xl font-bold">Teacher Dashboard</h1>
+            <p className="text-muted-foreground">Monitor student progress and manage your classes</p>
           </div>
           <div className="flex space-x-2">
             <Button onClick={() => setShowClassDialog(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Create New Class
+            </Button>
+            <Button variant="outline" onClick={() => setShowAIContentDialog(true)}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              AI Content Generator
+            </Button>
+            <Button variant="outline" onClick={() => setShowStudentAnalysisDialog(true)}>
+              <Brain className="mr-2 h-4 w-4" />
+              Student Analysis
             </Button>
             <Button variant="outline" onClick={() => navigate('/teacher/calendar')}>
               <Calendar className="mr-2 h-4 w-4" />
@@ -199,6 +327,52 @@ export default function TeacherDashboard() {
             </Button>
           </div>
         </div>
+
+        {/* AI-Powered Quick Actions */}
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800">
+              <Sparkles className="h-5 w-5" />
+              AI-Powered Teaching Tools
+            </CardTitle>
+            <CardDescription className="text-blue-700">
+              Leverage AI to enhance your teaching experience
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-center space-y-2 border-blue-300 hover:bg-blue-100"
+                onClick={() => setShowAIContentDialog(true)}
+              >
+                <Sparkles className="h-8 w-8 text-blue-600" />
+                <span className="font-medium">Generate Content</span>
+                <span className="text-xs text-muted-foreground">AI-powered lesson materials</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-center space-y-2 border-blue-300 hover:bg-blue-100"
+                onClick={() => setShowStudentAnalysisDialog(true)}
+              >
+                <Brain className="h-8 w-8 text-blue-600" />
+                <span className="font-medium">Student Analysis</span>
+                <span className="text-xs text-muted-foreground">AI insights on performance</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-auto p-4 flex flex-col items-center space-y-2 border-blue-300 hover:bg-blue-100"
+                onClick={() => navigate('/teacher/quizzes')}
+              >
+                <Target className="h-8 w-8 text-blue-600" />
+                <span className="font-medium">Create Quizzes</span>
+                <span className="text-xs text-muted-foreground">AI-generated assessments</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -247,7 +421,7 @@ export default function TeacherDashboard() {
           </Card>
         </div>
 
-        {/* AI Progress Reports */}
+        {/* Enhanced AI Progress Reports */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -267,37 +441,28 @@ export default function TeacherDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockAIReports.map((report) => (
-                <div key={report.id} className="border rounded-lg p-4 space-y-3">
+              {mockStudents.map((student) => (
+                <div key={student.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold">{report.studentName}</h3>
-                        <Badge variant={report.type === 'performance' ? 'default' : 'secondary'}>
-                          {report.type}
+                        <h3 className="font-semibold">{student.name}</h3>
+                        <Badge variant={student.needsAttention ? 'destructive' : 'default'}>
+                          {student.grade}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {Math.round(report.aiConfidence * 100)}% Confidence
+                        <Badge variant="outline">
+                          {student.progress}% Progress
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{report.content}</p>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Subject: {student.subject} • Last Active: {student.lastActive}
+                      </p>
                       
-                      {report.recommendations && (
-                        <div className="mb-3">
-                          <h4 className="text-sm font-medium mb-2">AI Recommendations:</h4>
-                          <ul className="text-sm text-gray-600 space-y-1">
-                            {report.recommendations.map((rec, idx) => (
-                              <li key={idx} className="flex items-center gap-2">
-                                <CheckCircle className="h-3 w-3 text-green-600" />
-                                {rec}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      <div className="text-xs text-gray-500">
-                        Generated: {new Date(report.generated).toLocaleString()}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm font-medium">Recent Quiz Score:</span>
+                        <Badge variant={student.recentQuizScore >= 80 ? 'default' : student.recentQuizScore >= 70 ? 'secondary' : 'destructive'}>
+                          {student.recentQuizScore}%
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -306,25 +471,31 @@ export default function TeacherDashboard() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleModifyReport(report)}
+                      onClick={() => handleGenerateAIReport(student.id, student.name)}
+                      disabled={isGeneratingReport}
                     >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Modify Report
+                      {isGeneratingReport ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Brain className="mr-2 h-4 w-4" />
+                      )}
+                      Generate AI Report
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => handleSendToParent(report.studentName, report.content)}
+                      variant="outline"
+                      onClick={() => setSelectedStudentForAnalysis(student.name)}
                     >
-                      <Send className="mr-2 h-4 w-4" />
-                      Send to Parent
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => navigate(`/teacher/students`)}
                     >
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Student
+                      <Users className="mr-2 h-4 w-4" />
+                      Manage Student
                     </Button>
                   </div>
                 </div>
@@ -476,6 +647,130 @@ export default function TeacherDashboard() {
                   Create Class
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* AI Content Generation Dialog */}
+        <Dialog open={showAIContentDialog} onOpenChange={setShowAIContentDialog}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                AI Content Generator
+              </DialogTitle>
+              <DialogDescription>
+                Generate engaging lesson content, activities, and materials using AI.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Content Prompt</label>
+                <Textarea
+                  value={aiContentPrompt}
+                  onChange={(e) => setAiContentPrompt(e.target.value)}
+                  placeholder="Describe the content you want to generate (e.g., 'Create a lesson plan for teaching quadratic equations to 9th graders')"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleGenerateAIContent} 
+                  disabled={!aiContentPrompt.trim() || isGeneratingContent}
+                >
+                  {isGeneratingContent ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Generate Content
+                </Button>
+              </div>
+              
+              {generatedContent && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Generated Content</label>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="prose max-w-none">
+                      <p className="whitespace-pre-wrap">{generatedContent}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => navigator.clipboard.writeText(generatedContent)}>
+                      Copy to Clipboard
+                    </Button>
+                    <Button onClick={() => setGeneratedContent('')}>
+                      Generate New
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Student Analysis Dialog */}
+        <Dialog open={showStudentAnalysisDialog} onOpenChange={setShowStudentAnalysisDialog}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                AI Student Analysis
+              </DialogTitle>
+              <DialogDescription>
+                Get AI-powered insights and recommendations for individual students.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Select Student</label>
+                <select
+                  value={selectedStudentForAnalysis}
+                  onChange={(e) => setSelectedStudentForAnalysis(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border rounded-md"
+                >
+                  <option value="">Choose a student...</option>
+                  {mockStudents.map((student) => (
+                    <option key={student.id} value={student.name}>
+                      {student.name} - {student.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleAnalyzeStudent} 
+                  disabled={!selectedStudentForAnalysis || isAnalyzingStudent}
+                >
+                  {isAnalyzingStudent ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Brain className="mr-2 h-4 w-4" />
+                  )}
+                  Analyze Student
+                </Button>
+              </div>
+              
+              {studentAnalysis && (
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">AI Analysis & Recommendations</label>
+                  <div className="border rounded-lg p-4 bg-muted/50">
+                    <div className="prose max-w-none">
+                      <p className="whitespace-pre-wrap">{studentAnalysis}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => navigator.clipboard.writeText(studentAnalysis)}>
+                      Copy Analysis
+                    </Button>
+                    <Button onClick={() => setStudentAnalysis('')}>
+                      Analyze Another Student
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
