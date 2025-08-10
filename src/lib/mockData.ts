@@ -77,6 +77,56 @@ export interface MockProgress {
   quizScores: { quizId: string; score: number; attempts: number }[];
   timeSpent: number; // in minutes
   lastActivity: string;
+  aiInsights: AIInsight[];
+  recommendations: string[];
+  strengths: string[];
+  areasForImprovement: string[];
+}
+
+export interface AIInsight {
+  id: string;
+  type: 'performance' | 'behavior' | 'learning_style' | 'engagement';
+  title: string;
+  description: string;
+  confidence: number; // 0-100
+  timestamp: string;
+  actionable: boolean;
+  actionItems: string[];
+}
+
+export interface MockClassSession {
+  id: string;
+  classId: string;
+  title: string;
+  type: 'online' | 'offline';
+  startTime: string;
+  endTime: string;
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+  attendees: string[];
+  resources: MockResource[];
+  notes: string;
+  recordingUrl?: string;
+}
+
+export interface MockParentCommunication {
+  id: string;
+  parentId: string;
+  studentId: string;
+  teacherId: string;
+  type: 'progress_report' | 'behavior_alert' | 'achievement' | 'recommendation';
+  title: string;
+  message: string;
+  performanceData?: {
+    overallScore: number;
+    subjectScores: { [subject: string]: number };
+    attendance: number;
+    participation: number;
+  };
+  recommendations: string[];
+  timestamp: string;
+  read: boolean;
+  responded: boolean;
+  response?: string;
 }
 
 export const mockUsers: MockUser[] = [
@@ -312,7 +362,22 @@ export const mockProgress: MockProgress[] = [
     completedModules: ['m1'],
     quizScores: [{ quizId: 'q1', score: 85, attempts: 2 }],
     timeSpent: 180,
-    lastActivity: '2024-01-20T10:30:00Z'
+    lastActivity: '2024-01-20T10:30:00Z',
+    aiInsights: [
+      {
+        id: 'ai1',
+        type: 'performance',
+        title: 'Strong Mathematical Foundation',
+        description: 'Student shows excellent understanding of calculus fundamentals with consistent high scores.',
+        confidence: 92,
+        timestamp: '2024-01-20T10:30:00Z',
+        actionable: true,
+        actionItems: ['Continue with advanced calculus topics', 'Focus on real-world applications']
+      }
+    ],
+    recommendations: ['Continue with advanced calculus topics', 'Practice with real-world problems'],
+    strengths: ['Mathematical reasoning', 'Problem-solving', 'Consistent performance'],
+    areasForImprovement: ['Application to real-world scenarios', 'Time management in exams']
   },
   {
     userId: 'u1',
@@ -320,7 +385,22 @@ export const mockProgress: MockProgress[] = [
     completedModules: ['m3'],
     quizScores: [{ quizId: 'q2', score: 90, attempts: 1 }],
     timeSpent: 120,
-    lastActivity: '2024-01-19T14:15:00Z'
+    lastActivity: '2024-01-19T14:15:00Z',
+    aiInsights: [
+      {
+        id: 'ai2',
+        type: 'learning_style',
+        title: 'Visual and Analytical Learner',
+        description: 'Student excels when combining textual analysis with visual aids and discussions.',
+        confidence: 88,
+        timestamp: '2024-01-19T14:15:00Z',
+        actionable: true,
+        actionItems: ['Use more visual learning materials', 'Encourage group discussions']
+      }
+    ],
+    recommendations: ['Use more visual learning materials', 'Participate in group discussions'],
+    strengths: ['Critical analysis', 'Literary interpretation', 'Active participation'],
+    areasForImprovement: ['Independent research', 'Creative writing skills']
   }
 ];
 
@@ -371,5 +451,84 @@ export const mockStudyGroups = [
     description: 'Deep dive into classic literature',
     meetingTime: 'Every Sunday 2:00 PM',
     createdBy: mockUsers[3]
+  }
+];
+
+export const mockClassSessions: MockClassSession[] = [
+  {
+    id: 'cs1',
+    classId: 'c1',
+    title: 'Calculus Fundamentals Live Session',
+    type: 'online',
+    startTime: '2024-01-22T14:00:00Z',
+    endTime: '2024-01-22T15:30:00Z',
+    status: 'scheduled',
+    attendees: ['u1', 'u2', 'u3'],
+    resources: [
+      { id: 'r9', title: 'Calculus Session Notes', type: 'document', url: '#', size: '1.2MB' },
+      { id: 'r10', title: 'Practice Problems Set', type: 'pdf', url: '#', size: '800KB' }
+    ],
+    notes: 'Live interactive session covering derivatives and integrals with real-time problem solving.',
+    recordingUrl: undefined
+  },
+  {
+    id: 'cs2',
+    classId: 'c2',
+    title: 'Shakespeare Analysis Workshop',
+    type: 'offline',
+    startTime: '2024-01-23T10:00:00Z',
+    endTime: '2024-01-23T11:30:00Z',
+    status: 'scheduled',
+    attendees: ['u1'],
+    resources: [
+      { id: 'r11', title: 'Workshop Materials', type: 'pdf', url: '#', size: '2.1MB' },
+      { id: 'r12', title: 'Discussion Questions', type: 'document', url: '#', size: '300KB' }
+    ],
+    notes: 'In-person workshop focusing on character analysis and thematic elements in Hamlet.',
+    recordingUrl: undefined
+  }
+];
+
+export const mockParentCommunications: MockParentCommunication[] = [
+  {
+    id: 'pc1',
+    parentId: 'u5',
+    studentId: 'u1',
+    teacherId: 'u2',
+    type: 'progress_report',
+    title: 'Monthly Progress Report - John Doe',
+    message: 'John has shown excellent progress in Advanced Mathematics this month. He consistently scores above 85% and actively participates in class discussions.',
+    performanceData: {
+      overallScore: 87,
+      subjectScores: { 'Mathematics': 87, 'Physics': 82, 'English': 90 },
+      attendance: 95,
+      participation: 88
+    },
+    recommendations: [
+      'Continue encouraging independent problem-solving',
+      'Consider advanced mathematics competitions',
+      'Maintain current study routine'
+    ],
+    timestamp: '2024-01-20T16:00:00Z',
+    read: false,
+    responded: false
+  },
+  {
+    id: 'pc2',
+    parentId: 'u5',
+    studentId: 'u1',
+    teacherId: 'u3',
+    type: 'achievement',
+    title: 'Outstanding Performance in Literature',
+    message: 'Congratulations! John has achieved the highest score in this month\'s Shakespeare analysis quiz.',
+    recommendations: [
+      'Encourage continued reading of classic literature',
+      'Consider joining the school\'s book club',
+      'Explore creative writing opportunities'
+    ],
+    timestamp: '2024-01-19T14:30:00Z',
+    read: true,
+    responded: true,
+    response: 'Thank you for the update! We\'re very proud of John\'s progress and will continue to support his literary interests.'
   }
 ]; 

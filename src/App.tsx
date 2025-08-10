@@ -9,6 +9,10 @@ import Auth from "./pages/Auth";
 import Classes from "./pages/Classes";
 import ClassDetail from "./pages/ClassDetail";
 import Quiz from "./pages/Quiz";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import ParentDashboard from "./pages/ParentDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
+import StudyRoom from "./pages/StudyRoom";
 import Navbar from "./components/layout/Navbar";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthProvider, RequireAuth } from "./contexts/AuthContext";
@@ -28,17 +32,18 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             
             {/* Student Routes */}
-            <Route path="/student" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Student Dashboard</h1><p>Welcome to your learning dashboard!</p></div></MainLayout></RequireAuth>} />
+            <Route path="/student" element={<RequireAuth><MainLayout userRole="student"><StudentDashboard /></MainLayout></RequireAuth>} />
             <Route path="/student/classes" element={<RequireAuth><MainLayout userRole="student"><Classes /></MainLayout></RequireAuth>} />
-            <Route path="/student/study-room" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Study Room</h1><p>Your personal study space</p></div></MainLayout></RequireAuth>} />
-            <Route path="/student/quizzes" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Quizzes</h1><p>Take quizzes and tests</p></div></MainLayout></RequireAuth>} />
+            <Route path="/student/study-room" element={<RequireAuth><MainLayout userRole="student"><StudyRoom /></MainLayout></RequireAuth>} />
+            <Route path="/student/quizzes" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Available Quizzes</h1><p>Select a quiz to take</p></div></MainLayout></RequireAuth>} />
+            <Route path="/student/quiz/:id" element={<RequireAuth><MainLayout userRole="student"><Quiz /></MainLayout></RequireAuth>} />
             <Route path="/student/progress" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Progress</h1><p>Track your learning progress</p></div></MainLayout></RequireAuth>} />
             <Route path="/student/groups" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Study Groups</h1><p>Collaborate with other students</p></div></MainLayout></RequireAuth>} />
             <Route path="/student/ai-assistant" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">AI Assistant</h1><p>Get help from our AI tutor</p></div></MainLayout></RequireAuth>} />
             <Route path="/student/calendar" element={<RequireAuth><MainLayout userRole="student"><div className="p-6"><h1 className="text-2xl font-bold">Calendar</h1><p>Schedule and deadlines</p></div></MainLayout></RequireAuth>} />
             
             {/* Teacher Routes */}
-            <Route path="/teacher" element={<RequireAuth><MainLayout userRole="teacher"><div className="p-6"><h1 className="text-2xl font-bold">Teacher Dashboard</h1><p>Manage your classes and students</p></div></MainLayout></RequireAuth>} />
+            <Route path="/teacher" element={<RequireAuth><MainLayout userRole="teacher"><TeacherDashboard /></MainLayout></RequireAuth>} />
             <Route path="/teacher/classes" element={<RequireAuth><MainLayout userRole="teacher"><div className="p-6"><h1 className="text-2xl font-bold">My Classes</h1><p>View and manage your classes</p></div></MainLayout></RequireAuth>} />
             <Route path="/teacher/students" element={<RequireAuth><MainLayout userRole="teacher"><div className="p-6"><h1 className="text-2xl font-bold">Students</h1><p>Manage your students</p></div></MainLayout></RequireAuth>} />
             <Route path="/teacher/content" element={<RequireAuth><MainLayout userRole="teacher"><div className="p-6"><h1 className="text-2xl font-bold">Content</h1><p>Create and manage learning content</p></div></MainLayout></RequireAuth>} />
@@ -48,7 +53,7 @@ const App = () => (
             <Route path="/teacher/calendar" element={<RequireAuth><MainLayout userRole="teacher"><div className="p-6"><h1 className="text-2xl font-bold">Calendar</h1><p>Schedule classes and events</p></div></MainLayout></RequireAuth>} />
             
             {/* Parent Routes */}
-            <Route path="/parent" element={<RequireAuth><MainLayout userRole="parent"><div className="p-6"><h1 className="text-2xl font-bold">Parent Dashboard</h1><p>Monitor your child's progress</p></div></MainLayout></RequireAuth>} />
+            <Route path="/parent" element={<RequireAuth><MainLayout userRole="parent"><ParentDashboard /></MainLayout></RequireAuth>} />
             <Route path="/parent/children" element={<RequireAuth><MainLayout userRole="parent"><div className="p-6"><h1 className="text-2xl font-bold">Children</h1><p>View your children's information</p></div></MainLayout></RequireAuth>} />
             <Route path="/parent/progress" element={<RequireAuth><MainLayout userRole="parent"><div className="p-6"><h1 className="text-2xl font-bold">Progress</h1><p>Track your child's learning progress</p></div></MainLayout></RequireAuth>} />
             <Route path="/parent/reports" element={<RequireAuth><MainLayout userRole="parent"><div className="p-6"><h1 className="text-2xl font-bold">Reports</h1><p>View detailed reports</p></div></MainLayout></RequireAuth>} />
