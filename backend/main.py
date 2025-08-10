@@ -10,7 +10,7 @@ from typing import List, Dict, Any
 import os
 from dotenv import load_dotenv
 
-from app.core.config import settings
+from backend.app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.neo4j_client import init_neo4j, close_neo4j
 from app.core.redis_client import init_redis, close_redis

@@ -11,12 +11,7 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = settings.DATABASE_URL
 
 # Create async engine
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=settings.DEBUG,
-    pool_pre_ping=True,
-    pool_recycle=300,
-)
+engine = create_async_engine("postgresql+asyncpg://user:password@192.168.82.7:5432/adaptive_learning")
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
