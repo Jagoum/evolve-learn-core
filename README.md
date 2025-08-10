@@ -1,24 +1,14 @@
+# AI-Powered Adaptive Learning Platform
 
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+This project is currently under active development. More details will be provided as the platform evolves.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Documentation
 
-# Step 3: Install the necessary dependencies.
-npm i
+Comprehensive documentation for this project can be found in the `docs/` directory. To view the documentation locally, please refer to `deploy-docs-locally.md`.
+# AI-Powered Adaptive Learning Platform
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+This project is currently under active development. More details will be provided as the platform evolves.
 
-## What technologies are used for this project?
+## Documentation
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
+Comprehensive documentation for this project can be found in the `docs/` directory. To view the documentation locally, please refer to `deploy-docs-locally.md`.
